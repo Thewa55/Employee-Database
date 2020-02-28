@@ -18,12 +18,12 @@ connection.connect(function(err) {
 });
 
 
-function startPrompts(){
+let startPrompts = () =>{
   inquirer.prompt({
     message: "Welcome, what would you like to do?",
     type: "list",
     name: "mainChoice",
-    choices: ["View all employees","View all employees by role", "View all employees by department",  "Add employee", "Add new title", "Remove employee", "Update employee role", "Update employee manager", "I am done"]
+    choices: ["View all employees","View all employees by role", "View all employees by department",  "Add employee", "Add new title", "Add new department", "Remove employee", "Update employee role", "Update employee manager", "I am done"]
   }).then(function(response){
     switch (response.mainChoice){
       case "View all employees":
@@ -46,7 +46,15 @@ function startPrompts(){
       case "Add employee":
         addEmployee();
         break;
-      
+
+      case "Add new title":
+        addNewTitle();
+        break;
+
+      case "Add new department":
+        addNewDept();
+        break;
+
       case "Remove employee":
         removeEmployee();
         break;
@@ -61,7 +69,7 @@ function startPrompts(){
   })
 }
 
-var viewAllEmployee = () => {
+let viewAllEmployee = () => {
   connection.query("SELECT first_name, last_name, title, salary, department_name FROM departments d JOIN employeeRole r ON d.id = r.department_id JOIN employees e ON r.id=e.role_id", 
   (err, res)=>{ 
     if (err) throw err;
@@ -70,7 +78,7 @@ var viewAllEmployee = () => {
   })
 }
 
-var viewEmployeeDepartment = () => {
+let viewEmployeeDepartment = () => {
   connection.query("SELECT * FROM departments", (err, res) => {
     inquirer.prompt({
       message: "What department would you like to view?",
@@ -94,7 +102,7 @@ var viewEmployeeDepartment = () => {
   })
 }
 
-var viewEmployeeRole = () => {
+let viewEmployeeRole = () => {
     connection.query("SELECT * FROM employeeRole", (err, res) => {
       inquirer.prompt({
         message: "What role would you like to view?",
@@ -118,7 +126,7 @@ var viewEmployeeRole = () => {
   })
 } 
 
-var addEmployee = ()=>{
+let addEmployee = ()=>{
   connection.query("SELECT * FROM employeeRole", (err, res) => {
     inquirer.prompt([{
       message: "What's the first name of the employee you are trying to add?",
@@ -147,13 +155,52 @@ var addEmployee = ()=>{
         if(role.title === response.selectedRole){
           connection.query("INSERT INTO employees(first_name, last_name, role_id) VALUES  (?, ? , ?);", [response.firstName, response.lastName, role.id], (err, res) => {
           if (err) throw err
-          console.log("Employee added successfully!")
+          console.log("Employee was added successfully!")
           startPrompts()})
         }  
       })
     })
   })
 }
+
+let addNewTitle = () => {
+  connection.query("SELECT * FROM departments", (err, res) =>{
+    inquirer.prompt([{
+      message: "What's the title you are trying to add?",
+      type: "input",
+      name: "title"
+    },
+    {
+      message: "What's the salary?",
+      type: "input",
+      name: "salary"
+    },
+    {
+      message: "What department is it in?",
+      type: "list",
+      name: "selectedDept",
+      choices: () =>{
+        let deptArray = [];
+        res.forEach(dept => {
+          deptArray.push(dept.department_name)            
+        });
+        return deptArray
+      }
+    }]).then(response => {
+      console.log(response)
+      res.forEach(dept =>{
+        if(dept.department_name === response.selectedDept){
+          connection.query("INSERT INTO employeeRole(title, salary, department_id) VALUES  (?, ? , ?);", [response.title, response.salary, dept.id], (err, res) => {
+          if (err) throw err
+          console.log("Title was added successfully!")
+          startPrompts()})
+        }
+      })
+    })
+  })
+}
+
+
 
 let removeEmployee = () => {
   connection.query("SELECT * FROM employees", (err, res) => {

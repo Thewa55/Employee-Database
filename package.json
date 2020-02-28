@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/Thewa55/Employee-Tracker#readme",
   "dependencies": {
+    "dotenv": "^8.2.0",
     "inquirer": "^7.0.4",
     "mysql": "^2.18.1"
   }

@@ -23,7 +23,7 @@ let startPrompts = () =>{
     message: "Welcome, what would you like to do?",
     type: "list",
     name: "mainChoice",
-    choices: ["View all employees","View all employees by role", "View all employees by department",  "Add employee", "Add new title", "Add new department", "Remove employee", "Remove title", "Remove department", "Update employee role", "Update employee manager", "I am done"]
+    choices: ["View all employees","View all employees by role", "View all employees by department",  "Add employee", "Add new title", "Add new department", "Remove employee", "Remove title", "Remove department", "Update employee role", "Update employee manager", "Total salary","I am done"]
   }).then(function(response){
     switch (response.mainChoice){
       case "View all employees":
@@ -69,6 +69,10 @@ let startPrompts = () =>{
 
       case "Update employee role":
         updateRole();
+        break;
+
+      case "Total salary":
+        totalSalary();
         break;
 
       case "I am done":
@@ -352,5 +356,18 @@ let updateRole = () => {
         }
       }) 
     })
+  })
+}
+
+let totalSalary =() =>{
+  connection.query("SELECT salary FROM departments d JOIN employeeRole r ON d.id = r.department_id JOIN employees e ON r.id=e.role_id", 
+  (err, res)=>{ 
+    if(err) throw err
+    let totalSalary = 0
+    res.forEach(result =>{
+      totalSalary = parseInt(result.salary) + totalSalary
+    })
+    console.table("Your company's total salary is $" + totalSalary)
+    startPrompts()
   })
 }

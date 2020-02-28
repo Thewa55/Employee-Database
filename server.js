@@ -45,6 +45,10 @@ function startPrompts(){
       case "Add employee":
         addEmployee();
         break;
+      
+      case "Remove employee":
+        removeEmployee();
+        break;
 
       case "I am done":
         connection.end()
@@ -139,6 +143,35 @@ var addEmployee = ()=>{
           connection.query("INSERT INTO employees(first_name, last_name, role_id) VALUES  (?, ? , ?);", [response.firstName, response.lastName, role.id], (err, res) => {
           if (err) throw err
           console.log("Employee added successfully!")
+          startPrompts()})
+        }  
+      })
+    })
+  })
+}
+
+let removeEmployee = () => {
+  connection.query("SELECT * FROM employees", (err, res) => {
+    inquirer.prompt({
+      message: "What is the name of the employee to be removed",
+      type: "list",
+      name: "employeename",
+      choices: () =>{
+        let names = [];
+        res.forEach(employee => {
+          let employeeName = employee.first_name + " " + employee.last_name
+          names.push(employeeName)         
+        })
+        return names
+      }
+    }).then(response => {
+      console.log(response)
+      res.forEach(employee =>{
+        let fullName = employee.first_name + " " + employee.last_name
+        if(fullName === response.employeename){
+          connection.query("DELETE FROM employees WHERE first_name = ? AND last_name = ?;", [employee.first_name, employee.last_name], (err, res) => {
+          if (err) throw err
+          console.log("Employee has been successfully removed!")
           startPrompts()})
         }  
       })

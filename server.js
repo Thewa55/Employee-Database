@@ -29,12 +29,21 @@ function startPrompts(){
       case "View all employees":
         viewAllEmployee();
         break;
+
       case "View all employees by department":
         viewEmployeeDepartment();
         break;
 
       case "View all employees by role":
         viewEmployeeRole()
+        break;
+
+      case "View all employees by manager":
+        viewEmployeeManager();
+        break;
+
+      case "Add employee":
+        addEmployee();
         break;
 
       case "I am done":
@@ -90,12 +99,49 @@ var viewEmployeeRole = () => {
           return rolesArray
         }
       }).then(response => {
-        console.log(response.selectedRole)
-        connection.query("SELECT first_name, last_name, title, salary, department_name FROM departments d INNER JOIN employeeRole r ON d.id = r.department_id JOIN employees e ON r.id=e.role_id WHERE r.title = ?", response.selectedRole, (err,res)=>{
-          if(err)throw err
+      console.log(response.selectedRole)
+      connection.query("SELECT first_name, last_name, title, salary, department_name FROM departments d INNER JOIN employeeRole r ON d.id = r.department_id JOIN employees e ON r.id=e.role_id WHERE r.title = ?", response.selectedRole, (err,res)=>{
+        if(err)throw err
           console.table(res)
           startPrompts()
-        })
       })
     })
-  } 
+  })
+} 
+
+var addEmployee = ()=>{
+  connection.query("SELECT * FROM employeeRole", (err, res) => {
+    inquirer.prompt([{
+      message: "What's the first name of the employee you are trying to add?",
+      type: "input",
+      name: "firstName"
+    },
+    {
+      message: "What's the last name of the employee you are trying to add?",
+      type: "input",
+      name: "lastName"
+    },
+    {
+      message: "What title does the employee have?",
+      type: "list",
+      name: "selectedRole",
+      choices: () =>{
+        let rolesArray = [];
+        res.forEach(role => {
+          rolesArray.push(role.title)            
+        });
+        return rolesArray
+      }
+    }]).then((response)=> {
+      console.log(response.lastName, response.firstName)
+      res.forEach(role =>{
+        if(role.title === response.selectedRole){
+          connection.query("INSERT INTO employees(first_name, last_name, role_id) VALUES  (?, ? , ?);", [response.firstName, response.lastName, role.id], (err, res) => {
+          if (err) throw err
+          console.log("Employee added successfully!")
+          startPrompts()})
+        }  
+      })
+    })
+  })
+}

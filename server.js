@@ -23,7 +23,7 @@ let startPrompts = () =>{
     message: "Welcome, what would you like to do?",
     type: "list",
     name: "mainChoice",
-    choices: ["View all employees","View all employees by role", "View all employees by department",  "Add employee", "Add new title", "Add new department", "Remove employee", "Remove title", "Update employee role", "Update employee manager", "I am done"]
+    choices: ["View all employees","View all employees by role", "View all employees by department",  "Add employee", "Add new title", "Add new department", "Remove employee", "Remove title", "Remove department", "Update employee role", "Update employee manager", "I am done"]
   }).then(function(response){
     switch (response.mainChoice){
       case "View all employees":
@@ -61,6 +61,10 @@ let startPrompts = () =>{
       
       case "Remove title":
         removeTitle();
+        break;
+
+      case "Remove department":
+        removeDepartment();
         break;
 
       case "Update employee role":
@@ -266,6 +270,32 @@ let removeTitle = () => {
           connection.query("DELETE FROM employeeRole WHERE title = ?;", response.rolename, (err, res) => {
             if (err) throw err
             console.log("The title has been successfully removed!")
+            startPrompts()})
+        }         
+      })
+    })
+  })
+}
+
+let removeDepartment = () => {
+  connection.query("SELECT * FROM departments", (err, res) => {
+    inquirer.prompt({
+      message: "What is title do you want to remove?",
+      type: "list",
+      name: "deptname",
+      choices: () =>{
+        let depts = [];
+        res.forEach(dept => {
+          depts.push(dept.department_name)         
+        })
+        return depts
+      }
+    }).then(response =>{
+      res.forEach(dept => {
+        if(dept.department_name === response.deptname){
+          connection.query("DELETE FROM departments WHERE department_name = ?;", response.deptname, (err, res) => {
+            if (err) throw err
+            console.log("The department has been successfully removed!")
             startPrompts()})
         }         
       })

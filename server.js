@@ -23,7 +23,7 @@ function startPrompts(){
     message: "Welcome, what would you like to do?",
     type: "list",
     name: "mainChoice",
-    choices: ["View all employees","View all employees by role", "View all employees by department", "View all employees by manager", "Add employee", "Remove employee", "Update employee role", "Update employee manager", "I am done"]
+    choices: ["View all employees","View all employees by role", "View all employees by department",  "Add employee", "Add new title", "Remove employee", "Update employee role", "Update employee manager", "I am done"]
   }).then(function(response){
     switch (response.mainChoice){
       case "View all employees":
@@ -38,9 +38,10 @@ function startPrompts(){
         viewEmployeeRole()
         break;
 
-      case "View all employees by manager":
-        viewEmployeeManager();
-        break;
+        // "View all employees by manager",
+      // case "View all employees by manager":
+      //   viewEmployeeManager();
+      //   break;
 
       case "Add employee":
         addEmployee();
@@ -48,6 +49,10 @@ function startPrompts(){
       
       case "Remove employee":
         removeEmployee();
+        break;
+
+      case "Update employee role":
+        updateRole();
         break;
 
       case "I am done":
@@ -175,6 +180,59 @@ let removeEmployee = () => {
           startPrompts()})
         }  
       })
+    })
+  })
+}
+
+
+let updateRole = () => {
+  connection.query("SELECT * FROM employees", (err, res) => {
+    if(err) throw err
+    inquirer.prompt({
+      message: "Which employee's role do you want to change?",
+      type: "list",
+      name: "employeename",
+      choices: () =>{
+        let names = [];
+        res.forEach(employee => {
+          let employeeName = employee.first_name + " " + employee.last_name
+          names.push(employeeName)         
+        })
+        return names
+      }
+    }).then(response => {
+      console.table(response)
+      res.forEach(employee =>{
+        let fullName = employee.first_name + " " + employee.last_name
+        if(fullName === response.employeename){
+          let empFirst = employee.first_name 
+          let empLast = employee.last_name
+          connection.query("SELECT * FROM employeeRole", (err, result) => {
+            if(err)throw err
+              inquirer.prompt({
+              message: "What's the employee's new role?",
+              type: "list",
+              name: "newRole",
+              choices: () =>{
+                let rolesArray = [];
+                result.forEach(role => {
+                  rolesArray.push(role.title)            
+                });
+                return rolesArray
+              }
+            }).then(changedrole => {
+              result.forEach(role => {
+                if(role.title === changedrole.newRole){
+                  connection.query("UPDATE employees SET role_id = ? WHERE first_name = ? AND last_name = ?;", [role.id, empFirst, empLast], (err, res) => {
+                  if (err) throw err
+                  console.log("Role changed successfully!")
+                  startPrompts()})
+                }  
+              })
+            })
+          })
+        }
+      }) 
     })
   })
 }

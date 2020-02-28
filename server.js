@@ -200,7 +200,19 @@ let addNewTitle = () => {
   })
 }
 
-
+let addNewDept = () =>{
+  inquirer.prompt({
+    message: "What is the name of department you want to add?",
+    type: "input",
+    name: "deptname"
+  }).then(response => {
+    connection.query("INSERT INTO departments(department_name) VALUES  (?);", response.deptname, (err,res)=> {
+      if(err) throw err
+      console.log("Department created successfully!")
+      startPrompts()
+    })
+  })
+}
 
 let removeEmployee = () => {
   connection.query("SELECT * FROM employees", (err, res) => {

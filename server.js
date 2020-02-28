@@ -23,7 +23,7 @@ let startPrompts = () =>{
     message: "Welcome, what would you like to do?",
     type: "list",
     name: "mainChoice",
-    choices: ["View all employees","View all employees by role", "View all employees by department",  "Add employee", "Add new title", "Add new department", "Remove employee", "Update employee role", "Update employee manager", "I am done"]
+    choices: ["View all employees","View all employees by role", "View all employees by department",  "Add employee", "Add new title", "Add new department", "Remove employee", "Remove title", "Update employee role", "Update employee manager", "I am done"]
   }).then(function(response){
     switch (response.mainChoice){
       case "View all employees":
@@ -57,6 +57,10 @@ let startPrompts = () =>{
 
       case "Remove employee":
         removeEmployee();
+        break;
+      
+      case "Remove title":
+        removeTitle();
         break;
 
       case "Update employee role":
@@ -243,6 +247,31 @@ let removeEmployee = () => {
   })
 }
 
+let removeTitle = () => {
+  connection.query("SELECT * FROM employeeRole", (err, res) => {
+    inquirer.prompt({
+      message: "What is title do you want to remove?",
+      type: "list",
+      name: "rolename",
+      choices: () =>{
+        let roles = [];
+        res.forEach(role => {
+          roles.push(role.title)         
+        })
+        return roles
+      }
+    }).then(response =>{
+      res.forEach(role => {
+        if(role.title === response.rolename){
+          connection.query("DELETE FROM employeeRole WHERE title = ?;", response.rolename, (err, res) => {
+            if (err) throw err
+            console.log("The title has been successfully removed!")
+            startPrompts()})
+        }         
+      })
+    })
+  })
+}
 
 let updateRole = () => {
   connection.query("SELECT * FROM employees", (err, res) => {

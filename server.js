@@ -392,22 +392,30 @@ let deptSalary = () =>{
 }
 
 let viewEmployeeManager = () =>{
-  connection.query("SELECT * FROM employees", (err, res) => {
+  connection.query("SELECT id, manager_id FROM employees GROUP BY manager_id", (err, res) => {
     if(err) throw err
     inquirer.prompt({
-      message: "Which employee's manager ?",
+      message: "Which manager would you like to view?",
       type: "list",
-      name: "employeename",
+      name: "managername",
       choices: () =>{
         let names = [];
-        res.forEach(employee => {
-          let employeeName = employee.first_name + " " + employee.last_name
-          names.push(employeeName)         
+        res.forEach(manager => {
+          if( manager.manager_id !== null){
+            names.push(manager.manager_id)         
+          }
         })
         return names
       }
     }).then(response => {
-
+      connection.query("SELECT first_name, last_name FROM employees WHERE manager_id = ?;", response.managername, (err, res) => {
+        if (err) throw err
+          res.forEach(employee =>{
+            let employeeName = employee.first_name + " " + employee.last_name
+            console.log(response.managername + " is a manager of " + employeeName)
+          })
+          startPrompts()
+      })    
     })
   })
 }

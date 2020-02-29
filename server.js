@@ -24,7 +24,7 @@ let startPrompts = () =>{
     message: "Welcome, what would you like to do?",
     type: "list",
     name: "mainChoice",
-    choices: ["View all employees","View all employees by role", "View all employees by department",  "Add employee", "Add new title", "Add new department", "Remove employee", "Remove title", "Remove department", "Update employee role", "Update employee manager", "Total salary by department","I am done"]
+    choices: ["View all employees","View all employees by role", "View all employees by department",  "Add employee", "Add new title", "Add new department", "Remove employee", "Remove title", "Remove department", "Update employee role", "Update employee manager", "View all employees by manager", "Total salary by department","I am done"]
   }).then(function(response){
     switch (response.mainChoice){
       case "View all employees":
@@ -39,10 +39,13 @@ let startPrompts = () =>{
         viewEmployeeRole()
         break;
 
-        // "View all employees by manager",
-      // case "View all employees by manager":
-      //   viewEmployeeManager();
-      //   break;
+      case "View all employees by manager":
+        viewEmployeeManager();
+        break;
+
+      case "Update employee manager":
+        updateEmployeeManager();
+        break;
 
       case "Add employee":
         addEmployee();
@@ -83,7 +86,7 @@ let startPrompts = () =>{
 }
 
 let viewAllEmployee = () => {
-  connection.query("SELECT first_name, last_name, title, salary, department_name FROM departments d JOIN employeeRole r ON d.id = r.department_id JOIN employees e ON r.id=e.role_id", 
+  connection.query("SELECT first_name, last_name, title, manager_id, salary, department_name FROM departments d JOIN employeeRole r ON d.id = r.department_id JOIN employees e ON r.id=e.role_id", 
   (err, res)=>{ 
     if (err) throw err;
     console.table(res);
@@ -106,7 +109,7 @@ let viewEmployeeDepartment = () => {
       }
     }).then(response => {
       console.log(response.selectedDep)
-      connection.query("SELECT first_name, last_name, title, salary, department_name FROM departments d INNER JOIN employeeRole r ON d.id = r.department_id JOIN employees e ON r.id=e.role_id WHERE d.department_name = ?", response.selectedDep, (err,res)=>{
+      connection.query("SELECT first_name, last_name, title, manager_id, salary, department_name FROM departments d INNER JOIN employeeRole r ON d.id = r.department_id JOIN employees e ON r.id=e.role_id WHERE d.department_name = ?", response.selectedDep, (err,res)=>{
         if(err)throw err
         console.table(res)
         startPrompts()
@@ -130,7 +133,7 @@ let viewEmployeeRole = () => {
         }
       }).then(response => {
       console.log(response.selectedRole)
-      connection.query("SELECT first_name, last_name, title, salary, department_name FROM departments d INNER JOIN employeeRole r ON d.id = r.department_id JOIN employees e ON r.id=e.role_id WHERE r.title = ?", response.selectedRole, (err,res)=>{
+      connection.query("SELECT first_name, last_name, title, manager_id, salary, department_name FROM departments d INNER JOIN employeeRole r ON d.id = r.department_id JOIN employees e ON r.id=e.role_id WHERE r.title = ?", response.selectedRole, (err,res)=>{
         if(err)throw err
           console.table(res)
           startPrompts()
@@ -383,6 +386,69 @@ let deptSalary = () =>{
             startPrompts()
           }
         )}
+      })
+    })
+  })
+}
+
+let viewEmployeeManager = () =>{
+  connection.query("SELECT * FROM employees", (err, res) => {
+    if(err) throw err
+    inquirer.prompt({
+      message: "Which employee's manager ?",
+      type: "list",
+      name: "employeename",
+      choices: () =>{
+        let names = [];
+        res.forEach(employee => {
+          let employeeName = employee.first_name + " " + employee.last_name
+          names.push(employeeName)         
+        })
+        return names
+      }
+    }).then(response => {
+
+    })
+  })
+}
+
+let updateEmployeeManager = () =>{
+  connection.query("SELECT * FROM employees", (err, res) => {
+    if(err) throw err
+    inquirer.prompt([{
+      message: "Which employee's manager do you want to update?",
+      type: "list",
+      name: "employeeName",
+      choices: () =>{
+        let names = [];
+        res.forEach(employee => {
+          let employeeName = employee.first_name + " " + employee.last_name
+          names.push(employeeName)         
+        })
+        return names
+      }
+    },
+    {
+      message: "Who is the new manager?",
+      type: "list",
+      name: "managername",
+      choices: () =>{
+        let names = [];
+        res.forEach(employee => {
+          let employeeName = employee.first_name + " " + employee.last_name
+          names.push(employeeName)         
+        })
+        return names
+      }
+    }]).then(response => {
+      res.forEach(employee => {
+        let searchName = employee.first_name + " " + employee.last_name
+        if(searchName === response.employeeName){
+          connection.query("UPDATE employees SET manager_id = ? WHERE first_name = ? AND last_name = ?;", [response.managername, employee.first_name, employee.last_name], (err, res) => {
+            if (err) throw err
+            console.log("Manager changed successfully!")
+            startPrompts()})
+        }
       })
     })
   })

@@ -24,9 +24,64 @@ let startPrompts = () =>{
     message: "Welcome, what would you like to do?",
     type: "list",
     name: "mainChoice",
-    choices: ["View all employees","View all employees by role", "View all employees by department",  "Add employee", "Add new title", "Add new department", "Remove employee", "Remove title", "Remove department", "Update employee role", "Update employee manager", "View all employees by manager", "Total salary by department","I am done"]
+    choices: ["View", "Add", "Remove", "Update", "Total salary by department","I am done"]
   }).then(function(response){
     switch (response.mainChoice){
+      case "View":
+        view();
+        break;
+
+      case "Add":
+        add();
+        break;
+
+      case "Remove":
+        remove();
+        break;
+
+      case "Update":
+        update();
+        break;
+
+      case "Total salary by department":
+        deptSalary();
+        break;
+
+      case "I am done":
+        connection.end()
+    }
+  })
+}
+
+let update = () =>{
+  inquirer.prompt({
+    message: "Welcome, what would you like to update?",
+    type: "list",
+    name: "updateChoice",
+    choices: ["Update employee role", "Update employee manager"]
+  }).then(function(response){
+    switch (response.updateChoice){
+      
+      case "Update employee manager":
+        updateEmployeeManager();
+        break;
+
+      case "Update employee role":
+        updateRole();
+        break;
+    }
+  })
+}
+
+let view = () =>{
+  inquirer.prompt({
+    message: "Welcome, what would you like to view?",
+    type: "list",
+    name: "viewChoice",
+    choices: ["View all employees","View all employees by role", "View all employees by department",  "View all employees by manager"]
+  }).then(function(response){
+    switch (response.viewChoice){
+      
       case "View all employees":
         viewAllEmployee();
         break;
@@ -42,11 +97,19 @@ let startPrompts = () =>{
       case "View all employees by manager":
         viewEmployeeManager();
         break;
+    }
+  })
+}
 
-      case "Update employee manager":
-        updateEmployeeManager();
-        break;
-
+let add = () =>{
+  inquirer.prompt({
+    message: "Welcome, what would you like to add?",
+    type: "list",
+    name: "addChoice",
+    choices: ["Add employee", "Add new title", "Add new department"]
+  }).then(function(response){
+    switch (response.addChoice){
+      
       case "Add employee":
         addEmployee();
         break;
@@ -58,7 +121,18 @@ let startPrompts = () =>{
       case "Add new department":
         addNewDept();
         break;
+    }
+  })
+}
 
+let remove = () => {
+  inquirer.prompt({
+    message: "Welcome, what would you like to remove?",
+    type: "list",
+    name: "removeChoice",
+    choices: ["Remove employee", "Remove title", "Remove department"]
+  }).then(function(response){
+    switch (response.removeChoice){
       case "Remove employee":
         removeEmployee();
         break;
@@ -70,17 +144,6 @@ let startPrompts = () =>{
       case "Remove department":
         removeDepartment();
         break;
-
-      case "Update employee role":
-        updateRole();
-        break;
-
-      case "Total salary by department":
-        deptSalary();
-        break;
-
-      case "I am done":
-        connection.end()
     }
   })
 }
@@ -203,11 +266,11 @@ let addNewTitle = () => {
         return deptArray
       }
     }]).then(response => {
-      console.log(response)
       res.forEach(dept =>{
         if(dept.department_name === response.selectedDept){
           connection.query("INSERT INTO employeeRole(title, salary, department_id) VALUES  (?, ? , ?);", [response.title, response.salary, dept.id], (err, res) => {
           if (err) throw err
+          console.table(response)
           console.log("Title was added successfully!")
           startPrompts()})
         }
@@ -288,7 +351,7 @@ let removeTitle = () => {
 let removeDepartment = () => {
   connection.query("SELECT * FROM departments", (err, res) => {
     inquirer.prompt({
-      message: "What is title do you want to remove?",
+      message: "What department do you want to remove?",
       type: "list",
       name: "deptname",
       choices: () =>{

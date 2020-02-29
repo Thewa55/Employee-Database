@@ -24,7 +24,7 @@ let startPrompts = () =>{
     message: "Welcome, what would you like to do?",
     type: "list",
     name: "mainChoice",
-    choices: ["View all employees","View all employees by role", "View all employees by department",  "Add employee", "Add new title", "Add new department", "Remove employee", "Remove title", "Remove department", "Update employee role", "Update employee manager", "Total salary","I am done"]
+    choices: ["View all employees","View all employees by role", "View all employees by department",  "Add employee", "Add new title", "Add new department", "Remove employee", "Remove title", "Remove department", "Update employee role", "Update employee manager", "Total salary by department","I am done"]
   }).then(function(response){
     switch (response.mainChoice){
       case "View all employees":
@@ -72,8 +72,8 @@ let startPrompts = () =>{
         updateRole();
         break;
 
-      case "Total salary":
-        totalSalary();
+      case "Total salary by department":
+        deptSalary();
         break;
 
       case "I am done":
@@ -360,15 +360,30 @@ let updateRole = () => {
   })
 }
 
-let totalSalary =() =>{
-  connection.query("SELECT salary FROM departments d JOIN employeeRole r ON d.id = r.department_id JOIN employees e ON r.id=e.role_id", 
-  (err, res)=>{ 
-    if(err) throw err
-    let totalSalary = 0
-    res.forEach(result =>{
-      totalSalary = parseInt(result.salary) + totalSalary
+let deptSalary = () =>{
+  connection.query("SELECT * FROM departments", (err, res) => {
+    if(err) throw err;
+    inquirer.prompt({
+      message: "What department would you like to view?",
+      type: "list",
+      name: "selectedDep",
+      choices: () =>{
+        let rolesArray = [];
+        res.forEach(department => {
+          rolesArray.push(department.department_name)            
+        });
+        return rolesArray
+      }
+    }).then(response => {
+      res.forEach(department =>{
+        if(department.department_name === response.selectedDep){
+          connection.query("SELECT department_name, SUM(salary) FROM departments d INNER JOIN employeeRole r ON d.id = r.department_id JOIN employees e ON r.id=e.role_id WHERE d.department_name = ?", response.selectedDep, (err,res)=>{
+            if (err) throw err
+            console.table(res)
+            startPrompts()
+          }
+        )}
+      })
     })
-    console.table("Your company's total salary is $" + totalSalary)
-    startPrompts()
   })
 }
